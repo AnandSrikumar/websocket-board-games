@@ -1,8 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from src.api.core.deps import PG, SETTINGS
-from src.api.core.security import (create_access_token, hash_password,
-                                   verify_password)
+from src.api.core.security import create_access_token, hash_password, verify_password
 from src.api.models.auth import Login, LoginSuccess, Register, RegisterSuccess
 
 router = APIRouter(prefix="/auth")
