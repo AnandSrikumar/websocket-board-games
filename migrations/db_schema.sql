@@ -43,7 +43,7 @@ CREATE INDEX idx_users_status
 -- ============================================================
 
 CREATE TABLE game (
-    game_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     name VARCHAR(100) NOT NULL,
     sample_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -60,7 +60,7 @@ CREATE INDEX idx_game_name
 -- ============================================================
 
 CREATE TABLE series (
-    series_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     game_id UUID NOT NULL,
     player1_id UUID NOT NULL,
@@ -73,7 +73,7 @@ CREATE TABLE series (
 
     CONSTRAINT series_game_fk
         FOREIGN KEY (game_id)
-        REFERENCES game (game_id),
+        REFERENCES game (id),
 
     CONSTRAINT series_player1_fk
         FOREIGN KEY (player1_id)
@@ -122,7 +122,7 @@ CREATE INDEX idx_series_active
 -- ============================================================
 
 CREATE TABLE match (
-    match_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     series_id UUID NOT NULL,
 
@@ -138,7 +138,7 @@ CREATE TABLE match (
 
     CONSTRAINT match_series_fk
         FOREIGN KEY (series_id)
-        REFERENCES series (series_id)
+        REFERENCES series (id)
         ON DELETE CASCADE,
 
     CONSTRAINT match_winner_fk
@@ -176,5 +176,6 @@ CREATE INDEX idx_match_active
     ON match (series_id)
     WHERE is_finished = FALSE;
 
+insert into game(name, sample_payload) values ('tictactoe', '{"row": 1, "col": 2}'::jsonb);
 
 COMMIT;
