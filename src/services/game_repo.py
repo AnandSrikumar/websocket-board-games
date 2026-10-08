@@ -33,3 +33,8 @@ class GameRepo:
         """
         res = await self._pg.fetchrow(q, game_id, player1_id, player2_id, target_wins)
         return res["id"]
+
+    async def create_match(self, series_id: UUID):
+        q = "insert into match(series_id) values ($1) returning id"
+        res = await self._pg.fetchrow(q, series_id)
+        return res["id"]

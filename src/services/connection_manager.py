@@ -7,22 +7,12 @@ from fastapi import WebSocket
 
 from src.exceptions import PlayerNotConnectedError
 from src.services.game_repo import GameRepo
+from src.services.player_models import PlayerSession
 from src.services.series_manager import SeriesManager
 
 from src.log import get_logger
 
 log = get_logger(__name__)
-
-
-@dataclass
-class PlayerSession:
-    player_id: UUID
-    websocket: WebSocket
-    game_id: UUID
-    game_name: str
-    player_name: str
-    target_wins: int = 10
-    connected: bool = True
 
 
 class ConnectionManager:
@@ -43,7 +33,7 @@ class ConnectionManager:
         target_wins: int = 10,
     ) -> tuple[bool, str]:
         try:
-            player_name = self._game_repo.get_player_name(player_id)
+            player_name = await self._game_repo.get_player_name(player_id)
             async with self._lock:
                 if (
                     player_id in self._connections
@@ -57,8 +47,8 @@ class ConnectionManager:
                     player_id,
                     websocket,
                     game_id,
-                    player_name,
                     game_name,
+                    player_name,
                     target_wins,
                 )
                 self._connections[player_id] = player_session
@@ -91,16 +81,24 @@ class ConnectionManager:
         while True:
             player1 = await queue.get()
             player2 = await queue.get()
-            target_wins = self._connections[player1].target_wins
-            game = self._connections[player1].game_name # only player 1 game needed
+            player1_session = self._connections[player1]
+            player2_session = self._connections[player2]
+            target_wins = player1_session.target_wins
+            game = player1_session.game_name  # only player 1 game needed
             try:
                 series_id = await self._game_repo.create_series(
-                    player1, player2, target_wins, game
+                    player1, player2, target_wins, game_id
                 )
-                series_object = SeriesManager(series_id, player1, player2, target_wins, game_id)
+                series_object = SeriesManager(
+                    {player1: player1_session, player2: player2_session},
+                    series_id,
+                    self._game_repo,
+                )
                 self._series[player1] = series_object
-                self._series[player2] = series_object                
+                self._series[player2] = series_object
                 log.info(f"{player1} vs {player2} playing: {game_id}")
+            except Exception as e:
+                log.error(f"error in creating series: {e}")
             finally:
                 queue.task_done()
                 queue.task_done()
@@ -119,10 +117,12 @@ class ConnectionManager:
 
     async def communicate(self, player_id: UUID, message: dict):
         if player_id not in self._connections:
-            raise PlayerNotConnectedError(f"Unknown player: {player_id} trying to communicate")
+            raise PlayerNotConnectedError(
+                f"Unknown player: {player_id} trying to communicate"
+            )
         if player_id not in self._series:
             raise PlayerNotConnectedError(f"Player not yet in the game")
-        self._series[player_id].make_move(player_id, message)
+        await self._series[player_id].make_move(player_id, message)
 
     async def shutdown(self):
         # Stop matchmaking workers
