@@ -122,7 +122,7 @@ class ConnectionManager:
             )
         if player_id not in self._series:
             raise PlayerNotConnectedError(f"Player not yet in the game")
-        await self._series[player_id].make_move(player_id, message)
+        return await self._series[player_id].make_move(player_id, message)
 
     async def shutdown(self):
         # Stop matchmaking workers

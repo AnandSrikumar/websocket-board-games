@@ -41,3 +41,4 @@ class SeriesManager:
         player_name = self._player_sessions[player_id].player_name
         move_res = self._game_object.make_move(player_name, payload)
         log.info(f"player: {player_id} -> {asdict(move_res)}")
+        return self._game_object.board

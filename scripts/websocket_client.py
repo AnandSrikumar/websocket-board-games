@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 import websockets
 import argparse
@@ -33,9 +34,19 @@ async def send(ws):
         await ws.send(message)
 
 
+def print_board(board):
+    for i, row in enumerate(board):
+        print(" | ".join(cell or " " for cell in row))
+
+        if i < len(board) - 1:
+            print("---+---+---")
+
 async def recv(ws):
     async for message in ws:
-        print(f"\n>> {message}")
+        data = json.loads(message)
+        if data["event"] == "board_update":
+            print("\033[H\033[J", end="")
+            print_board(data["board"])
 
 
 async def ws_connect(token: str):
