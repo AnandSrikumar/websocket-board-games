@@ -12,6 +12,17 @@ class GameRepo:
         res = await self._pg.fetchval(q, game)
         return res
 
+    async def get_game_name(self, game_id: str):
+        q = "select name from game where id=$1"
+        res = await self._pg.fetchval(q, game_id)
+        return res
+
+    async def get_player_name(self, player_id: UUID):
+        res = await self._pg.fetchval(
+            "select username from users where id=$1", player_id
+        )
+        return res
+
     async def create_series(
         self, player1_id: UUID, player2_id: UUID, target_wins: int, game_id: UUID
     ):

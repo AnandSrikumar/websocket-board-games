@@ -28,7 +28,9 @@ async def game_join(
     user_id = await authenticate_websocket(token, settings.jwt_secret)
     log.info("Websocket authenticated....")
     game_id = await game_repo.get_game_type_id(game_name)
-    is_connected, message = await manager.connect(user_id, websocket, game_id, target_wins)
+    is_connected, message = await manager.connect(
+        user_id, websocket, game_id, game_name, target_wins
+    )
     if not is_connected:
         log.error(f"Failed to connect: {message}")
         return
