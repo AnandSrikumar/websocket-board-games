@@ -40,11 +40,13 @@ async def game_join(
         while True:
             message = await websocket.receive_json()
             log.info(f"{user_id}=>: {message}")
-            board = await manager.communicate(user_id, message)
-            await websocket.send_json({
-                "event": "board_update",
-                "board": board,
-            })
+            _ = await manager.communicate(user_id, message)
+            # await websocket.send_json(
+            #     {
+            #         "event": "board_update",
+            #         "board": board,
+            #     }
+            # )
     except WebSocketDisconnect:
         await manager.disconnect(user_id)
         log.info(f"{user_id} disconnected...")

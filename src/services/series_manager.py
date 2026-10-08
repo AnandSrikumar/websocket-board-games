@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import asdict
 from uuid import UUID
 
@@ -34,6 +35,30 @@ class SeriesManager:
         self._game_object = get_game(game, match_id)
         for _, session in self._player_sessions.items():
             self._game_object.add_player(session.player_name)
+        self._is_game_started = True
+
+    async def _update_match_state(
+        self,
+        board: list[list[str | None]],
+        player_id: UUID,
+        player_name: str,
+        payload: dict,
+    ):
+        move = {"player_id": player_id, "name": player_name, "move": payload}
+        updated_id = await self._repo.update_match(
+            board, move, self._game_object.match_id
+        )
+        log.info(f"Updated: {updated_id}")
+
+    async def _broadcast(self, board):
+        payload = {
+            "event": "board_update",
+            "board": board,
+        }
+        tasks = []
+        for _, session in self._player_sessions.items():
+            tasks.append(session.websocket.send_json(payload))
+        await asyncio.gather(*tasks)
 
     async def make_move(self, player_id: UUID, payload: dict):
         if not self._is_game_started:
@@ -41,4 +66,7 @@ class SeriesManager:
         player_name = self._player_sessions[player_id].player_name
         move_res = self._game_object.make_move(player_name, payload)
         log.info(f"player: {player_id} -> {asdict(move_res)}")
-        return self._game_object.board
+        board = self._game_object.board
+        await self._update_match_state(board, player_id, player_name, payload)
+        await self._broadcast(board)
+        return board

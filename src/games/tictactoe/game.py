@@ -34,6 +34,10 @@ class TicTacToe(GameBase):
         return self._board
 
     @property
+    def match_id(self):
+        return self._match_id
+
+    @property
     def players(self):  # will return {anand: X, sri: O}
         return self._player_symbol_map
 

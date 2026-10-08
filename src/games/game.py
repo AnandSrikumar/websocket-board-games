@@ -16,6 +16,10 @@ class GameBase(ABC):
 
     @property
     @abstractmethod
+    def match_id(self): ...
+
+    @property
+    @abstractmethod
     def players(self): ...
 
     @abstractmethod

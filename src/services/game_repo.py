@@ -1,3 +1,4 @@
+import json
 from uuid import UUID
 
 from src.api.core.pg import PgClient
@@ -37,4 +38,17 @@ class GameRepo:
     async def create_match(self, series_id: UUID):
         q = "insert into match(series_id) values ($1) returning id"
         res = await self._pg.fetchrow(q, series_id)
+        return res["id"]
+
+    async def update_match(self, game_board: dict, moves: dict, match_id: UUID):
+        q = """
+            UPDATE match
+            SET
+                game_board = $1::jsonb,
+                player_moves = player_moves || $2::jsonb
+            WHERE id = $3 returning id;
+        """
+        res = await self._pg.fetchrow(
+            q, json.dumps(game_board), json.dumps(moves), match_id
+        )
         return res["id"]
