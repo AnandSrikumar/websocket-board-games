@@ -65,3 +65,4 @@ data/
 tmp/
 
 # 
+ui/node_modules/
