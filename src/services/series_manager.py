@@ -21,11 +21,12 @@ class SeriesManager:
     ):
         self._player_sessions = player_sessions
         self._series_id = series_id
-        self._wins: dict[UUID, int] = {}
+        self._wins: dict[str, int] = {session.player_name: 0 for _, session in player_sessions.items()}
         self._is_game_started = False
         self._is_series_done = False
         self._repo = game_repo
         self._game_object: GameBase | None = None
+        self._game_over: bool = False        
 
     async def _create_match(self):
         game = None
@@ -57,7 +58,7 @@ class SeriesManager:
             tasks.append(session.websocket.send_json(payload))
         await asyncio.gather(*tasks)
 
-    async def make_move(self, player_id: UUID, payload: dict):
+    async def make_move(self, player_id: UUID, payload: dict):        
         if not self._is_game_started:
             await self._create_match()
         player_name = self._player_sessions[player_id].player_name
@@ -68,6 +69,7 @@ class SeriesManager:
         payload = {
             "event": "board_update",
             "board": board,
+            "wins": self._wins
         }
         await self._broadcast(payload)
         return board
@@ -82,4 +84,8 @@ class SeriesManager:
                 "win_state": game_result.win_state,
             }
             log.info(f"result: {payload}")
+            winner = game_result.winner
+            if winner is not None:
+                self._wins[winner] += 1
             await self._broadcast(payload)
+            self._is_game_started = False

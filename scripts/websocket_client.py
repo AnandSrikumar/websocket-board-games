@@ -47,6 +47,7 @@ async def recv(ws):
         event = data["event"]
 
         if event in ("board_update", "finished"):
+            
             print("\033[H\033[J", end="")
             print_board(data["board"])
 
