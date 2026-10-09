@@ -102,6 +102,12 @@ class TicTacToe(GameBase):
                     self._last_player_name, True, {"direction": "LD", "idx": None}
                 )
 
+        for row in self._board:
+            for col in row:
+                if col is None:
+                    return structure_complete_response(
+                        None, False, {"direction": "", "idx": None}
+                    )
         return structure_complete_response(None, True, {"direction": "", "idx": None})
 
     def make_move(self, player_name: str, payload: dict) -> MakeMoveResponse:

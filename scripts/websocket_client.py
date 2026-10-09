@@ -44,9 +44,19 @@ def print_board(board):
 async def recv(ws):
     async for message in ws:
         data = json.loads(message)
-        if data["event"] == "board_update":
+        event = data["event"]
+
+        if event in ("board_update", "finished"):
             print("\033[H\033[J", end="")
             print_board(data["board"])
+
+        if event == "finished":
+            if data["winner"] is None:
+                print("\nIt's a draw!")
+            else:
+                print(f"\n Winner: {data['winner']}")
+
+            print(f"Winning line: {data['win_state']}")
 
 
 async def ws_connect(token: str):

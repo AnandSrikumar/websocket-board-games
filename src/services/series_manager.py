@@ -4,6 +4,7 @@ from uuid import UUID
 
 from src.games.game_factory import get_game
 from src.games.game import GameBase
+from src.games.response_classes import GameResult
 from src.log import get_logger
 from src.services.game_repo import GameRepo
 from src.services.player_models import PlayerSession
@@ -50,11 +51,7 @@ class SeriesManager:
         )
         log.info(f"Updated: {updated_id}")
 
-    async def _broadcast(self, board):
-        payload = {
-            "event": "board_update",
-            "board": board,
-        }
+    async def _broadcast(self, payload):
         tasks = []
         for _, session in self._player_sessions.items():
             tasks.append(session.websocket.send_json(payload))
@@ -68,5 +65,21 @@ class SeriesManager:
         log.info(f"player: {player_id} -> {asdict(move_res)}")
         board = self._game_object.board
         await self._update_match_state(board, player_id, player_name, payload)
-        await self._broadcast(board)
+        payload = {
+            "event": "board_update",
+            "board": board,
+        }
+        await self._broadcast(payload)
         return board
+
+    async def check_results(self, board):
+        game_result: GameResult = self._game_object.get_result()
+        if game_result.is_finished:
+            payload = {
+                "event": "finished",
+                "board": board,
+                "winner": game_result.winner or "draw",
+                "win_state": game_result.win_state,
+            }
+            log.info(f"result: {payload}")
+            await self._broadcast(payload)
