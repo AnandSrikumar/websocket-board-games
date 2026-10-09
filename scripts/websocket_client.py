@@ -49,6 +49,7 @@ async def recv(ws):
         if event in ("board_update", "finished"):
             
             print("\033[H\033[J", end="")
+            print(f"\nWins: {data.get('wins', {})}\n")
             print_board(data["board"])
 
         if event == "finished":
